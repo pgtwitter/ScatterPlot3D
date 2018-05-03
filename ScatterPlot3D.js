@@ -1,17 +1,13 @@
 (function() {
 	const xyz = ['x', 'y', 'z'];
-	let camera, scene, renderer;
-	let cameraControls;
-	let container, stats;
-	const frame = new THREE.Object3D();
-	const points = new THREE.Object3D();
-	const lines = new THREE.Object3D();
+	const renderers = [];
 
 	function normalize(v, range) {
 		return ((v - range[0]) / (range[2])) - .5;
 	}
 
-	function Frame(axes, onesideFlag) {
+	function Frame(self, axes, onesideFlag) {
+		const frame = self.frame;
 		const frameMat = new THREE.LineBasicMaterial({
 			color: '#333',
 		});
@@ -20,7 +16,8 @@
 			[0, 2],
 			[0, 1],
 		];
-		Array.forEach(xyz, function(key, i) {
+		Array.prototype.forEach.call(xyz, function(key, i) {
+			if (onesideFlag[i]) return;
 			const ary = [{
 				x: axes[0][(i == 0) ? 0 : 3],
 				y: axes[1][(i == 1) ? 0 : 3],
@@ -33,10 +30,9 @@
 			const geometry = new THREE.BufferGeometry().setFromPoints(ary);
 			frame.add(new THREE.Line(geometry, frameMat));
 
-			if (onesideFlag[i]) return;
 			const s = new THREE.LineSegments(
 				new THREE.EdgesGeometry(new THREE.PlaneBufferGeometry(1, 1)), frameMat);
-			Array.forEach(['x', 'y'], function(akey, j) {
+			Array.prototype.forEach.call(['x', 'y'], function(akey, j) {
 				s.scale[akey] = axes[m[i][j]][2];
 			});
 			s.position[key] = axes[i][3];
@@ -48,69 +44,64 @@
 		});
 		const box = new THREE.LineSegments(
 			new THREE.EdgesGeometry(new THREE.CubeGeometry()), frameMat);
-		Array.forEach(xyz, function(key, i) {
+		Array.prototype.forEach.call(xyz, function(key, i) {
 			box.scale[key] = axes[i][2];
 		})
 		frame.add(box);
-		frame.rotation.x = -Math.PI / 2;
-		scene.add(frame);
 	}
 
-	function InitRenderer() {
-		const WIDTH = container.clientWidth;
-		const HEIGHT = container.clientHeight;
+	function InitRenderer(self) {
+		const WIDTH = self.container.clientWidth;
+		const HEIGHT = self.container.clientHeight;
 		const VIEW_ANGLE = 55;
 		const ASPECT = WIDTH / HEIGHT;
 		const NEAR = .1;
 		const FAR = 500;
-		camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+		const camera = new THREE.PerspectiveCamera(VIEW_ANGLE, ASPECT, NEAR, FAR);
+		self.camera = camera;
 		camera.position.z = 2;
-		// camera = new THREE.OrthographicCamera(
-		// 	WIDTH * ASPECT / -2, HEIGHT * ASPECT / 2,
-		// 	WIDTH / 2, HEIGHT / -2,
-		// 	NEAR, FAR);
-		scene = new THREE.Scene();
+		const scene = new THREE.Scene();
+		self.scene = scene;
 		scene.add(camera);
-		renderer = new THREE.CanvasRenderer({
+		scene.add(self.objects);
+
+		const renderer = new THREE.CanvasRenderer({
 			antialias: true,
 		});
+		renderers.push(renderer);
+		self.renderer = renderer;
+		renderer.scene = scene;
+		renderer.camera = camera;
 		renderer.setPixelRatio(window.devicePixelRatio);
 		renderer.setSize(WIDTH, HEIGHT);
 		renderer.setClearColor('#eff', 1);
 
-		cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
+		const cameraControls = new THREE.OrbitControls(camera, renderer.domElement);
+		self.cameraControls = cameraControls;
 		cameraControls.target.set(0, 0, 0);
 		cameraControls.maxDistance = 3;
 		cameraControls.minDistance = 1;
 		cameraControls.update();
 
-		container.appendChild(renderer.domElement);
-		// stats = new Stats();
-		// container.appendChild(stats.dom);
+		self.container.appendChild(renderer.domElement);
 	}
 
 	function Animate() {
 		requestAnimationFrame(Animate);
-		// UpdateMotion();
-		renderer.render(scene, camera);
-		// stats.update();
+		Array.prototype.forEach.call(renderers, function(renderer) {
+			renderer.render(renderer.scene, renderer.camera);
+		});
 	}
 
-	function UpdateMotion() {
-		const time = Date.now() * 0.001;
-		const delta = Math.sin(time);
-		const v = Math.PI / 4 + 1.1 * delta;
-		frame.rotation.z = v;
-		points.rotation.z = v;
-		lines.rotation.z = v;
-	}
-
-	function pre(data) {
-		const tmp = [];
-		Array.forEach(xyz, function(key) {
-			tmp.push(data.map(function(d) {
-				return d[key];
-			}));
+	function scale(datam) {
+		const tmp = xyz.map(function(key) {
+			const tmp1 = [];
+			Array.prototype.forEach.call(datam, function(data, i) {
+				Array.prototype.push.apply(tmp1, data.data.map(function(d) {
+					return d[key];
+				}));
+			});
+			return tmp1;
 		});
 		const ranges = tmp.map(function(d) {
 			const minv = Math.min.apply(null, d);
@@ -135,7 +126,7 @@
 	}
 
 	function supportLine(d, data) {
-		return d.supportLine !== void 0 ? d.supportLine : (data.supportLine !== void 0) ? data.supportLine : true;
+		return d.supportLine !== void 0 ? d.supportLine : (data.supportLine !== void 0) ? data.supportLine : false;
 	}
 
 	function style(d, data) {
@@ -154,8 +145,8 @@
 
 	function materials(datam) {
 		const stylesDic = {};
-		Array.forEach(datam, function(data, i) {
-			Array.forEach(data.data, function(d) {
+		Array.prototype.forEach.call(datam, function(data, i) {
+			Array.prototype.forEach.call(data.data, function(d) {
 				const key = styleKey(d, data);
 				if (!key) return;
 				stylesDic[key] = {
@@ -193,16 +184,10 @@
 	}
 
 	function arrange(data, ranges, axes) {
-		const tmp = [];
-		Array.forEach(xyz, function(key) {
-			tmp.push(data.map(function(d) {
-				return d[key];
+		const arrangedData = xyz.map(function(key, i) {
+			return (data.map(function(d) {
+				return normalize(d[key], ranges[i]) * axes[i][2];
 			}));
-		});
-		const arrangedData = tmp.map(function(xyzV, i) {
-			return xyzV.map(function(v, j) {
-				return normalize(v, ranges[i]) * axes[i][2];
-			});
 		});
 		return arrangedData;
 	}
@@ -211,10 +196,10 @@
 		style2index, spriteCanvasMaterials, lineBasicMaterials) {
 		const points = new THREE.Object3D();
 		const lines = new THREE.Object3D();
-		Array.forEach(data.data, function(d, i) {
+		Array.prototype.forEach.call(data.data, function(d, i) {
 			const index = style2index[styleKey(d, data)];
 			const point = new THREE.Sprite(spriteCanvasMaterials[index]);
-			Array.forEach(xyz, function(key, j) {
+			Array.prototype.forEach.call(xyz, function(key, j) {
 				point.position[key] = arrangedData[j][i];
 			});
 			point.userInfo = d;
@@ -229,8 +214,6 @@
 			const geometry = new THREE.BufferGeometry().setFromPoints(ary);
 			lines.add(new THREE.Line(geometry, lineBasicMaterials[index]));
 		});
-		points.rotation.x = -Math.PI / 2;
-		lines.rotation.x = -Math.PI / 2;
 		return [points, lines];
 	}
 
@@ -252,22 +235,62 @@
 			const geometry = new THREE.BufferGeometry().setFromPoints([p0, p1]);
 			lines.add(new THREE.Line(geometry, lineBasicMaterials[index]));
 		}
-		lines.rotation.x = -Math.PI / 2;
 		return lines;
 	}
 
-	function ScatterPlot(datam) {
-		const whole = [];
-		Array.forEach(datam, function(data) {
-			Array.prototype.push.apply(whole, data.data);
+	function pre(datam) {
+		if ((datam instanceof Array && datam.length > 0) &&
+			(datam[0] instanceof Array && datam[0].length == 3) &&
+			(isFinite(datam[0][0]) && isFinite(datam[0][1]) && isFinite(datam[0][2]))) {
+			const points = datam.map(function(data, i) {
+				const p = {};
+				Array.prototype.forEach.call(data, function(v, j) {
+					p[xyz[j]] = v;
+				});
+				return p;
+			});
+			datam = {
+				data: points,
+			};
+		}
+		datam = (datam instanceof Object && datam['data']) ? [datam] : datam;
+		datam = (datam instanceof Array && datam.length > 0 &&
+			datam[0]['x'] && datam[0]['y'] && datam[0]['z']) ? [{
+			data: datam
+		}] : datam;
+		if (!datam instanceof Array || datam.length == 0) {
+			console.log('The datam did not match this program.');
+			return;
+		}
+		Array.prototype.forEach.call(datam, function(data) {
+			data.data = data.data.map(function(d, i) {
+				d['z'] = -1.0 * d['z'];
+				return d;
+			})
 		});
-		const [_ranges, _axes, _onesideFlag, _zSideFlag] = pre(whole);
-		const [_style2index, _spriteCanvasMaterials, _lineBasicMaterials] = materials(datam);
+		return datam;
+	}
 
-		Array.forEach(datam, function(data) {
+	function ScatterPlot(self, datam) {
+		datam = pre(datam);
+		if (!datam) return;
+
+		const [_ranges, _axes, _onesideFlag, _zSideFlag] = scale(datam);
+		const [_style2index, _spriteCanvasMaterials, _lineBasicMaterials] = materials(datam);
+		const points = self.points;
+		const lines = self.lines;
+		Array.prototype.forEach.call(datam, function(data) {
 			const arrangedData = arrange(data.data, _ranges, _axes);
 			switch (data.type) {
-				case 0:
+				case 1:
+					{
+						const _lines = plotLines(
+							data, arrangedData, _axes,
+							_style2index, _lineBasicMaterials);
+						lines.add(_lines);
+					}
+					break;
+				default:
 					{
 						const [_points, _lines] = plotPoints(
 							data, arrangedData, _axes,
@@ -277,27 +300,29 @@
 						lines.add(_lines);
 					}
 					break;
-				case 1:
-					{
-						const _lines = plotLines(
-							data, arrangedData, _axes,
-							_style2index, _lineBasicMaterials);
-						lines.add(_lines);
-					}
-					break;
 			}
 		});
-		scene.add(lines);
-		scene.add(points);
-		Frame(_axes, _onesideFlag);
+		Frame(self, _axes, _onesideFlag);
 	}
 
 	function ScatterPlot3D(_container, datam) {
-		container = _container;
-		InitRenderer();
-		ScatterPlot(datam);
+		const self = {
+			container: _container,
+			frame: new THREE.Object3D(),
+			points: new THREE.Object3D(),
+			lines: new THREE.Object3D(),
+			objects: new THREE.Object3D(),
+		};
+		self.objects.add(self.frame);
+		self.objects.add(self.lines);
+		self.objects.add(self.points);
+		InitRenderer(self);
+		ScatterPlot(self, datam);
+		if (true) {
+			self.objects.rotation.x = Math.PI / 2;
+			self.objects.scale.y = -1;
+		}
 		Animate();
 	}
-
 	window.ScatterPlot3D = ScatterPlot3D;
 })();
