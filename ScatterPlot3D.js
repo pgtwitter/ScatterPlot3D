@@ -17,19 +17,21 @@
 			[0, 1],
 		];
 		Array.prototype.forEach.call(xyz, function(key, i) {
+			if (!onesideFlag[m[i][0]] && !onesideFlag[m[i][1]]) {
+				const ary = [{
+					x: axes[0][(i == 0) ? 0 : 3],
+					y: axes[1][(i == 1) ? 0 : 3],
+					z: axes[2][(i == 2) ? 0 : 3],
+				}, {
+					x: axes[0][(i == 0) ? 1 : 3],
+					y: axes[1][(i == 1) ? 1 : 3],
+					z: axes[2][(i == 2) ? 1 : 3],
+				}];
+				const geometry = new THREE.BufferGeometry().setFromPoints(ary);
+				frame.add(new THREE.Line(geometry, frameMat));
+			}
 			if (onesideFlag[i]) return;
-			const ary = [{
-				x: axes[0][(i == 0) ? 0 : 3],
-				y: axes[1][(i == 1) ? 0 : 3],
-				z: axes[2][(i == 2) ? 0 : 3],
-			}, {
-				x: axes[0][(i == 0) ? 1 : 3],
-				y: axes[1][(i == 1) ? 1 : 3],
-				z: axes[2][(i == 2) ? 1 : 3],
-			}];
-			const geometry = new THREE.BufferGeometry().setFromPoints(ary);
-			frame.add(new THREE.Line(geometry, frameMat));
-
+			
 			const s = new THREE.LineSegments(
 				new THREE.EdgesGeometry(new THREE.PlaneBufferGeometry(1, 1)), frameMat);
 			Array.prototype.forEach.call(['x', 'y'], function(akey, j) {
