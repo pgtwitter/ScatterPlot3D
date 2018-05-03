@@ -39,8 +39,9 @@ ScatterPlot3D(document.getElementById('container'), datam);
 ## result
 ![result0](result0.png)
 
-
 ![result1](result1.png)
+
+![result2](result2.gif)
 
 ## reference
 * [3D Scatter Plot Using three.js](http://bl.ocks.org/phil-pedruco/9852362)
