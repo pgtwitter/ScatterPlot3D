@@ -1,0 +1,22 @@
+<meta charset="utf-8">
+<div id="container2" style="width:300px;height:300px;float:left;"></div>
+<link rel="stylesheet" href="../index.css">
+<script src="../threejs/three.min.js"></script>
+<script src="../threejs/addons/CanvasRenderer.js"></script>
+<script src="../threejs/addons/Projector.js"></script>
+<script src="../threejs/addons/OrbitControls.js"></script>
+<script src="../ScatterPlot3D.js"></script>
+<script>
+	const datadata = [];
+	for (let i = 0; i < 100; i++)
+		datadata.push({
+			x: Math.sin(i / 50 * Math.PI),
+			y: Math.cos(i / 50 * Math.PI),
+			z: (i - 50) * 0.01,
+		});
+	const data = {
+		type: 1,
+		data: datadata,
+	}
+	ScatterPlot3D(document.getElementById('container2'), data);
+</script>
