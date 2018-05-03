@@ -55,5 +55,5 @@
 	});
 
 	const datam = [d0, d1, d2, d3];
-	ScatterPlot3D(document.getElementById('container'), datam)
+	ScatterPlot3D.plot(document.getElementById('container'), datam)
 })();

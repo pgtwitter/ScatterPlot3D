@@ -28,12 +28,12 @@
 			y: r(),
 			z: r()
 		});
-	ScatterPlot3D(document.getElementById('container3'), data3);
+	ScatterPlot3D.plot(document.getElementById('container3'), data3);
 
 	const data4 = {
 		type: 1,
 		style: '#ff8800',
 		data: data3.data,
 	};
-	ScatterPlot3D(document.getElementById('container4'), data4);
+	ScatterPlot3D.plot(document.getElementById('container4'), data4);
 </script>
