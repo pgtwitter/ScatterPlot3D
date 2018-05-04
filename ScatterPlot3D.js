@@ -93,6 +93,18 @@
 		});
 	}
 
+	function Resize() {
+		Array.prototype.forEach.call(Object.keys(classes), function(key) {
+			const self = classes[key];
+			const WIDTH = self.container.clientWidth;
+			const HEIGHT = self.container.clientHeight;
+			self.renderer.setSize(WIDTH, HEIGHT);
+			const ASPECT = WIDTH / HEIGHT;
+			self.camera.aspect = ASPECT;
+			self.camera.updateProjectionMatrix();
+		});
+	}
+
 	function scale(self, datam) {
 		const tmp = xyz.map(function(key) {
 			const tmp1 = [];
@@ -342,6 +354,9 @@
 			}
 			if (!isAnimated) {
 				Animate();
+				window.addEventListener('resize', function() {
+					Resize();
+				}, true);
 				isAnimated = true;
 			}
 		}
