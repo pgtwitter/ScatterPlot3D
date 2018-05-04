@@ -169,8 +169,8 @@
 		return [ranges, axes, onesideFlag, zSideFlag];
 	}
 
-	function supportLine(d, data) {
-		return d.supportLine !== void 0 ? d.supportLine : (data.supportLine !== void 0) ? data.supportLine : false;
+	function altitudeLine(d, data) {
+		return d.altitudeLine !== void 0 ? d.altitudeLine : (data.altitudeLine !== void 0) ? data.altitudeLine : false;
 	}
 
 	function style(d, data) {
@@ -244,9 +244,9 @@
 			Array.prototype.forEach.call(xyz, function(key, j) {
 				point.position[key] = arrangedData[j][i];
 			});
-			if (!supportLine(d, data)) return;
+			if (!altitudeLine(d, data)) return;
 
-			const name1 = 'supportLine_' + dataid + '_' + i;
+			const name1 = 'altitudeLine_' + dataid + '_' + i;
 			let line = self.lines.getObjectByName(name1);
 			if (line === void 0) {
 				const geometry = new THREE.BufferGeometry();

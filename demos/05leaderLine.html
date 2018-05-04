@@ -1,0 +1,62 @@
+<meta charset="utf-8">
+<div id="container8" style="width:300px;height:300px;float:left;"></div>
+<div id="container9" style="width:300px;height:300px;float:left;"></div>
+<link rel="stylesheet" href="../index.css">
+<script src="../threejs/three.min.js"></script>
+<script src="../threejs/addons/CanvasRenderer.js"></script>
+<script src="../threejs/addons/Projector.js"></script>
+<script src="../threejs/addons/OrbitControls.js"></script>
+<script src="../ScatterPlot3D.js"></script>
+<script>
+	function n() {
+		return 2.0 * Math.random() - 1.0;
+	}
+	const colors = [
+		[0, 0, 0],
+		[255, 0, 0],
+		[255, 255, 0],
+		[0, 255, 0],
+		[0, 255, 255],
+		[0, 0, 255],
+		[255, 0, 255],
+		[255, 255, 255]
+	];
+	const data8 = [];
+	for (let t = 0; t < 50; t++) {
+		const p = {
+			x: n(),
+			y: n(),
+			z: n(),
+		};
+		const index = (p.x > 0 ? 1 : 0) + (p.y > 0 ? 2 : 0) + (p.z > 0 ? 4 : 0);
+		p.style = 'rgb(' + colors[index].join(',') + ')';
+
+		data8.push(p);
+	}
+	ScatterPlot3D.plot(document.getElementById('container8'), {
+		data: data8,
+		altitudeLine: true,
+	});
+
+	const data9 = [];
+	for (let t = 0; t < 1; t += 0.002) {
+		const th = Math.PI * 2 * t;
+		const r = parseInt(512 * Math.cos(th));
+		const g = parseInt(512 * Math.sin(th * 0.75));
+		const b = parseInt(512 * -Math.cos(th * 0.75));
+		const c = [];
+		c.push((r > 0) ? ((r > 255) ? 255 : r) : 0);
+		c.push((g > 0) ? ((g > 255) ? 255 : g) : 0);
+		c.push((b > 0) ? ((b > 255) ? 255 : b) : 0);
+		data9.push({
+			x: Math.cos(th),
+			y: Math.sin(th),
+			z: Math.sin(2 * th),
+			altitudeLine: true,
+			style: 'rgb(' + c.join(',') + ')'
+		});
+	}
+	ScatterPlot3D.plot(document.getElementById('container9'), {
+		data: data9
+	});
+</script>
