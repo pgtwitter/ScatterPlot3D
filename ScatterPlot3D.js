@@ -3,51 +3,83 @@
 	let isAnimated = false;
 	const containerIdKey = 'data-scatterplot3d-id';
 	const classes = {};
+	const m = [
+		[2, 1],
+		[0, 2],
+		[0, 1],
+	];
 
 	function normalize(v, range) {
 		return ((v - range[0]) / (range[2])) - .5;
 	}
 
-	function Frame(self) {
-		const m = [
-			[2, 1],
-			[0, 2],
-			[0, 1],
-		];
-		Array.prototype.forEach.call(xyz, function(key, i) {
-			if (!self.onesideFlag[m[i][0]] && !self.onesideFlag[m[i][1]]) {
-				const ary = [{
-					x: self.axes[0][(i == 0) ? 0 : 3],
-					y: self.axes[1][(i == 1) ? 0 : 3],
-					z: self.axes[2][(i == 2) ? 0 : 3],
-				}, {
-					x: self.axes[0][(i == 0) ? 1 : 3],
-					y: self.axes[1][(i == 1) ? 1 : 3],
-					z: self.axes[2][(i == 2) ? 1 : 3],
-				}];
-				const geometry = new THREE.BufferGeometry().setFromPoints(ary);
-				self.frame.add(new THREE.Line(geometry, self.frameMat));
+	function Frame_Line(self, key, i) {
+		const name = 'axis_' + key;
+		let line = self.frame.getObjectByName(name);
+		if (line !== void 0) line.visible = false;
+		if (!self.onesideFlag[m[i][0]] && !self.onesideFlag[m[i][1]]) {
+			if (line === void 0) {
+				const geometry = new THREE.BufferGeometry();
+				line = new THREE.Line(geometry, self.frameMat);
+				line.name = name;
+				self.frame.add(line);
 			}
-			if (self.onesideFlag[i]) return;
+			line.visible = true;
+			const ary = [{
+				x: self.axes[0][(i == 0) ? 0 : 3],
+				y: self.axes[1][(i == 1) ? 0 : 3],
+				z: self.axes[2][(i == 2) ? 0 : 3],
+			}, {
+				x: self.axes[0][(i == 0) ? 1 : 3],
+				y: self.axes[1][(i == 1) ? 1 : 3],
+				z: self.axes[2][(i == 2) ? 1 : 3],
+			}];
+			line.geometry.setFromPoints(ary);
+		}
+	}
 
-			const s = new THREE.LineSegments(
-				new THREE.EdgesGeometry(new THREE.PlaneBufferGeometry(1, 1)), self.frameMat);
-			Array.prototype.forEach.call(['x', 'y'], function(akey, j) {
-				s.scale[akey] = self.axes[m[i][j]][2];
-			});
-			s.position[key] = self.axes[i][3];
+	function Frame_Plane(self, key, i) {
+		const name = 'plane_' + key;
+		let plane = self.frame.getObjectByName(name);
+		if (plane === void 0) {
+			plane = new THREE.LineSegments(
+				new THREE.EdgesGeometry(
+					new THREE.PlaneBufferGeometry(1, 1)), self.frameMat);
+			plane.name = name;
+			self.frame.add(plane);
 			if (i == 0)
-				s.rotation.y = -Math.PI / 2;
+				plane.rotation.y = -Math.PI / 2;
 			else if (i == 1)
-				s.rotation.x = -Math.PI / 2;
-			self.frame.add(s);
+				plane.rotation.x = -Math.PI / 2;
+		}
+		Array.prototype.forEach.call(['x', 'y'], function(akey, j) {
+			plane.scale[akey] = self.axes[m[i][j]][2];
 		});
-		const box = new THREE.LineSegments(
-			new THREE.EdgesGeometry(new THREE.CubeGeometry()), self.frameMat);
+		plane.position[key] = self.axes[i][3];
+	}
+
+	function Frame_Box(self) {
+		const name = 'box';
+		let box = self.frame.getObjectByName(name);
+		if (box === void 0) {
+			box = new THREE.LineSegments(
+				new THREE.EdgesGeometry(
+					new THREE.CubeGeometry()), self.frameMat);
+			box.name = name;
+			self.frame.add(box);
+		}
 		Array.prototype.forEach.call(xyz, function(key, i) {
 			box.scale[key] = self.axes[i][2];
-		})
-		self.frame.add(box);
+		});
+	}
+
+	function Frame(self) {
+		Array.prototype.forEach.call(xyz, function(key, i) {
+			Frame_Line(self, key, i);
+			if (self.onesideFlag[i]) return;
+			Frame_Plane(self, key, i);
+		});
+		Frame_Box(self);
 	}
 
 	function InitRenderer(self) {
@@ -198,33 +230,52 @@
 	}
 
 	function plotPoints(self, data, arrangedData) {
+		const dataid = self.datam.indexOf(data);
 		Array.prototype.forEach.call(data.data, function(d, i) {
 			const index = self.style2index[styleKey(d, data)];
-
-			const point = new THREE.Sprite(self.spriteCanvasMaterials[index]);
+			const name0 = 'point_' + dataid + '_' + i;
+			let point = self.points.getObjectByName(name0);
+			if (point === void 0) {
+				point = new THREE.Sprite(self.spriteCanvasMaterials[index]);
+				point.name = name0;
+				point.userInfo = d;
+				self.points.add(point);
+			}
 			Array.prototype.forEach.call(xyz, function(key, j) {
 				point.position[key] = arrangedData[j][i];
 			});
-			point.userInfo = d;
-			self.points.add(point);
 			if (!supportLine(d, data)) return;
 
+			const name1 = 'supportLine_' + dataid + '_' + i;
+			let line = self.lines.getObjectByName(name1);
+			if (line === void 0) {
+				const geometry = new THREE.BufferGeometry();
+				line = new THREE.Line(geometry, self.lineBasicMaterials[index]);
+				line.name = name1;
+				self.lines.add(line);
+			}
 			const p = Object.assign({}, point.position);
 			p.z = self.axes[2][3];
 			if (self.onesideFlag[2]) {
 				p.z = (self.zSideFlag ? self.axes[2][0] : self.axes[2][1]);
 			}
-			const ary = [point.position, p];
-			const geometry = new THREE.BufferGeometry().setFromPoints(ary);
-			self.lines.add(new THREE.Line(geometry, self.lineBasicMaterials[index]));
+			line.geometry.setFromPoints([point.position, p]);
 		});
 	}
 
 	function plotLines(self, data, arrangedData) {
+		const dataid = self.datam.indexOf(data);
 		for (let i = 0; i < data.data.length - 1; i++) {
-			const d = data.data[i];
-			const index = self.style2index[styleKey(d, data)];
-
+			const name = 'line_' + dataid + '_' + i;
+			let line = self.lines.getObjectByName(name);
+			if (line === void 0) {
+				const d = data.data[i];
+				const index = self.style2index[styleKey(d, data)];
+				const geometry = new THREE.BufferGeometry();
+				line = new THREE.Line(geometry, self.lineBasicMaterials[index]);
+				line.name = name;
+				self.lines.add(line);
+			}
 			const p0 = {
 				x: arrangedData[0][i],
 				y: arrangedData[1][i],
@@ -235,8 +286,7 @@
 				y: arrangedData[1][i + 1],
 				z: arrangedData[2][i + 1],
 			};
-			const geometry = new THREE.BufferGeometry().setFromPoints([p0, p1]);
-			self.lines.add(new THREE.Line(geometry, self.lineBasicMaterials[index]));
+			line.geometry.setFromPoints([p0, p1]);
 		}
 	}
 
@@ -281,22 +331,12 @@
 		return !flag;
 	}
 
-	function removeAll(target) {
-		while (target.children.length > 0) {
-			const obj = target.children.pop();
-			obj.parent = null;
-		}
-	}
-
 	function ScatterPlot(self, datam) {
 		materials(self, datam);
 		const [ranges, axes, onesideFlag, zSideFlag] = scale(self, datam);
 		let target = datam;
 		if (!self.ranges || !contain(ranges, self.ranges)) {
 			target = self.datam.concat(datam);
-			removeAll(self.points);
-			removeAll(self.lines);
-			removeAll(self.frame);
 			const [ranges1, axes1, onesideFlag1, zSideFlag1] = scale(self, target);
 			self.ranges = ranges1;
 			self.axes = axes1;
@@ -304,6 +344,7 @@
 			self.zSideFlag = zSideFlag1;
 			Frame(self);
 		}
+		if (self.ranges[0][2] == 0 && self.ranges[1][2] == 0 && self.ranges[2][2] == 0) return;
 		Array.prototype.forEach.call(target, function(data) {
 			const arrangedData = arrange(data.data, self.ranges, self.axes);
 			switch (data.type) {
@@ -360,8 +401,8 @@
 				isAnimated = true;
 			}
 		}
-		ScatterPlot(self, datam);
 		Array.prototype.push.apply(self.datam, datam);
+		ScatterPlot(self, datam);
 	}
 
 	window.ScatterPlot3D = {
