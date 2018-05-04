@@ -13,18 +13,33 @@
 		return ((v - range[0]) / (range[2])) - .5;
 	}
 
+	function arrangeObject(object, points) {
+		const vX = new THREE.Vector3(1, 0, 0);
+		const vA = new THREE.Vector3(points[0].x, points[0].y, points[0].z);
+		const vB = new THREE.Vector3(points[1].x, points[1].y, points[1].z);
+		const vAB = vB.sub(vA);
+		object.scale.x = vAB.length();
+		Array.prototype.forEach.call(xyz, function(key, j) {
+			object.position[key] = (points[0][key] + points[1][key]) / 2.0;
+		});
+		const vABn = vAB.normalize();
+		const vC = vX.cross(vABn).normalize();
+		const ang = Math.acos(vABn.x);
+		const quaternion = new THREE.Quaternion();
+		quaternion.setFromAxisAngle(vC, (isNaN(ang) ? 0 : ang));
+		object.setRotationFromQuaternion(quaternion);
+	}
+
 	function Frame_Line(self, key, i) {
 		const name = 'axis_' + key;
 		let line = self.frame.getObjectByName(name);
 		if (line !== void 0) line.visible = false;
 		if (!self.onesideFlag[m[i][0]] && !self.onesideFlag[m[i][1]]) {
 			if (line === void 0) {
-				const geometry = new THREE.BufferGeometry();
-				line = new THREE.Line(geometry, self.frameMat);
+				line = new THREE.Line(self.lineGeom, self.frameMat);
 				line.name = name;
 				self.frame.add(line);
 			}
-			line.visible = true;
 			const ary = [{
 				x: self.axes[0][(i == 0) ? 0 : 3],
 				y: self.axes[1][(i == 1) ? 0 : 3],
@@ -34,7 +49,7 @@
 				y: self.axes[1][(i == 1) ? 1 : 3],
 				z: self.axes[2][(i == 2) ? 1 : 3],
 			}];
-			line.geometry.setFromPoints(ary);
+			arrangeObject(line, ary);
 		}
 	}
 
@@ -42,9 +57,7 @@
 		const name = 'plane_' + key;
 		let plane = self.frame.getObjectByName(name);
 		if (plane === void 0) {
-			plane = new THREE.LineSegments(
-				new THREE.EdgesGeometry(
-					new THREE.PlaneBufferGeometry(1, 1)), self.frameMat);
+			plane = new THREE.LineSegments(self.squareWGeom, self.frameMat);
 			plane.name = name;
 			self.frame.add(plane);
 			if (i == 0)
@@ -62,9 +75,7 @@
 		const name = 'box';
 		let box = self.frame.getObjectByName(name);
 		if (box === void 0) {
-			box = new THREE.LineSegments(
-				new THREE.EdgesGeometry(
-					new THREE.CubeGeometry()), self.frameMat);
+			box = new THREE.LineSegments(self.cubeWGeom, self.frameMat);
 			box.name = name;
 			self.frame.add(box);
 		}
@@ -249,17 +260,17 @@
 			const name1 = 'altitudeLine_' + dataid + '_' + i;
 			let line = self.lines.getObjectByName(name1);
 			if (line === void 0) {
-				const geometry = new THREE.BufferGeometry();
-				line = new THREE.Line(geometry, self.lineBasicMaterials[index]);
+				line = new THREE.Line(self.lineGeom, self.lineBasicMaterials[index]);
 				line.name = name1;
 				self.lines.add(line);
 			}
-			const p = Object.assign({}, point.position);
-			p.z = self.axes[2][3];
+			const p0 = Object.assign({}, point.position);
+			const p1 = Object.assign({}, point.position);
+			p1.z = self.axes[2][3];
 			if (self.onesideFlag[2]) {
-				p.z = (self.zSideFlag ? self.axes[2][0] : self.axes[2][1]);
+				p1.z = (self.zSideFlag ? self.axes[2][0] : self.axes[2][1]);
 			}
-			line.geometry.setFromPoints([point.position, p]);
+			arrangeObject(line, [p0, p1]);
 		});
 	}
 
@@ -271,8 +282,7 @@
 			if (line === void 0) {
 				const d = data.data[i];
 				const index = self.style2index[styleKey(d, data)];
-				const geometry = new THREE.BufferGeometry();
-				line = new THREE.Line(geometry, self.lineBasicMaterials[index]);
+				line = new THREE.Line(self.lineGeom, self.lineBasicMaterials[index]);
 				line.name = name;
 				self.lines.add(line);
 			}
@@ -286,7 +296,7 @@
 				y: arrangedData[1][i + 1],
 				z: arrangedData[2][i + 1],
 			};
-			line.geometry.setFromPoints([p0, p1]);
+			arrangeObject(line, [p0, p1]);
 		}
 	}
 
@@ -388,6 +398,11 @@
 			self.frameMat = new THREE.LineBasicMaterial({
 				color: '#333',
 			});
+			self.squareWGeom = new THREE.EdgesGeometry(new THREE.PlaneBufferGeometry(1, 1));
+			self.cubeWGeom = new THREE.EdgesGeometry(new THREE.CubeGeometry(1, 1, 1));
+			self.lineGeom = new THREE.BufferGeometry().setFromPoints([
+				new THREE.Vector3(-0.5, 0, 0), new THREE.Vector3(0.5, 0, 0)
+			]);
 			InitRenderer(self);
 			if (true) {
 				self.objects.rotation.x = Math.PI / 2;
