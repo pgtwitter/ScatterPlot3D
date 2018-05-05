@@ -222,6 +222,9 @@
 					context.beginPath();
 					context.arc(0, 0, 0.01, 0, PI2, true);
 					context.fill();
+					context.strokeStyle = '#333';
+					context.lineWidth = 0.001;
+					context.stroke();
 				}
 			}));
 			self.lineBasicMaterials.push(new THREE.LineBasicMaterial({
