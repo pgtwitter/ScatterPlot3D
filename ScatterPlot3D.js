@@ -1,5 +1,6 @@
 (function() {
 	const XYZ = ['x', 'y', 'z'];
+	const DIRECT_LINEGEOM = new THREE.Vector3(1, 0, 0);
 	let isAnimated = false;
 	const containerIdKey = 'data-scatterplot3d-id';
 	const classes = {};
@@ -14,19 +15,17 @@
 	}
 
 	function arrangeObject(object, points) {
-		const vX = new THREE.Vector3(1, 0, 0);
-		const vA = new THREE.Vector3(points[0].x, points[0].y, points[0].z);
-		const vB = new THREE.Vector3(points[1].x, points[1].y, points[1].z);
-		const vAB = vB.sub(vA);
+		const vA = points[0];
+		const vB = points[1];
+		const vAB = (new THREE.Vector3()).subVectors(vB, vA);
 		object.scale.x = vAB.length();
-		Array.prototype.forEach.call(XYZ, function(key, j) {
-			object.position[key] = (points[0][key] + points[1][key]) / 2.0;
-		});
+		object.position.copy((new THREE.Vector3()).addVectors(vA, vB)
+			.divideScalar(2.0));
 		const vABn = vAB.normalize();
-		const vC = vX.cross(vABn).normalize();
+		const vC = (new THREE.Vector3()).crossVectors(DIRECT_LINEGEOM, vABn);
 		const ang = Math.acos(vABn.x);
 		const quaternion = new THREE.Quaternion();
-		quaternion.setFromAxisAngle(vC, (isNaN(ang) ? 0 : ang));
+		quaternion.setFromAxisAngle(vC.normalize(), (isNaN(ang) ? 0 : ang));
 		object.setRotationFromQuaternion(quaternion);
 	}
 
@@ -40,15 +39,14 @@
 				line.name = name;
 				self.frame.add(line);
 			}
-			const ary = [{
-				x: self.axes[0][(i == 0) ? 0 : 3],
-				y: self.axes[1][(i == 1) ? 0 : 3],
-				z: self.axes[2][(i == 2) ? 0 : 3],
-			}, {
-				x: self.axes[0][(i == 0) ? 1 : 3],
-				y: self.axes[1][(i == 1) ? 1 : 3],
-				z: self.axes[2][(i == 2) ? 1 : 3],
-			}];
+
+			function f(xyzIndex, i, j) {
+				return self.axes[xyzIndex][(i == xyzIndex) ? j : 3]
+			}
+			const ary = [
+				new THREE.Vector3(f(0, i, 0), f(1, i, 0), f(2, i, 0)),
+				new THREE.Vector3(f(0, i, 1), f(1, i, 1), f(2, i, 1)),
+			];
 			arrangeObject(line, ary);
 		}
 	}
@@ -235,12 +233,13 @@
 	}
 
 	function arrange(data, ranges, axes) {
-		const arrangedData = XYZ.map(function(key, i) {
-			return (data.map(function(d) {
-				return normalize(d[key], ranges[i]) * axes[i][2];
-			}));
+		return data.map(function(d) {
+			const p = new THREE.Vector3();
+			Array.prototype.forEach.call(XYZ, function(key, i) {
+				p[key] = normalize(d[key], ranges[i]) * axes[i][2];
+			});
+			return p;
 		});
-		return arrangedData;
 	}
 
 	function plotPoints(self, data, arrangedData) {
@@ -255,9 +254,7 @@
 				point.userInfo = d;
 				self.points.add(point);
 			}
-			Array.prototype.forEach.call(XYZ, function(key, j) {
-				point.position[key] = arrangedData[j][i];
-			});
+			point.position.copy(arrangedData[i]);
 			if (!altitudeLine(d, data)) return;
 
 			const name1 = 'altitudeLine_' + dataid + '_' + i;
@@ -267,8 +264,8 @@
 				line.name = name1;
 				self.lines.add(line);
 			}
-			const p0 = Object.assign({}, point.position);
-			const p1 = Object.assign({}, point.position);
+			const p0 = point.position.clone();
+			const p1 = point.position.clone();
 			p1.z = self.axes[2][3];
 			if (self.onesideFlag[2]) {
 				p1.z = (self.zSideFlag ? self.axes[2][0] : self.axes[2][1]);
@@ -289,17 +286,7 @@
 				line.name = name;
 				self.lines.add(line);
 			}
-			const p0 = {
-				x: arrangedData[0][i],
-				y: arrangedData[1][i],
-				z: arrangedData[2][i],
-			};
-			const p1 = {
-				x: arrangedData[0][i + 1],
-				y: arrangedData[1][i + 1],
-				z: arrangedData[2][i + 1],
-			};
-			arrangeObject(line, [p0, p1]);
+			arrangeObject(line, [arrangedData[i], arrangedData[i + 1]]);
 		}
 	}
 
