@@ -178,16 +178,20 @@
 		return [ranges, axes, onesideFlag, zSideFlag];
 	}
 
+	function attrFn(d, data, key, v) {
+		return d[key] !== void 0 ? d[key] : (data[key] !== void 0 ? data[key] : v);
+	}
+
 	function altitudeLine(d, data) {
-		return d.altitudeLine !== void 0 ? d.altitudeLine : (data.altitudeLine !== void 0) ? data.altitudeLine : false;
+		return attrFn(d, data, 'altitudeLine', false);
 	}
 
 	function style(d, data) {
-		return d.style ? d.style : (data.style) ? data.style : '#111';
+		return attrFn(d, data, 'style', '#555');
 	}
 
 	function lineWidth(d, data) {
-		return d.lineWidth ? d.lineWidth : (data.lineWidth) ? data.lineWidth : 1;
+		return attrFn(d, data, 'lineWidth', 1);
 	}
 
 	function styleKey(d, data) {
