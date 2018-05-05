@@ -40,7 +40,7 @@
 
 	const data9 = [];
 	for (let t = 0; t < 1; t += 0.002) {
-		const th = Math.PI * 2 * t;
+		const th = Math.PI * 2 * (t + 1E-6);
 		const r = parseInt(512 * Math.cos(th));
 		const g = parseInt(512 * Math.sin(th * 0.75));
 		const b = parseInt(512 * -Math.cos(th * 0.75));
