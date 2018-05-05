@@ -182,6 +182,10 @@
 		return d[key] !== void 0 ? d[key] : (data[key] !== void 0 ? data[key] : v);
 	}
 
+	function altitudeLineColored(d, data) {
+		return attrFn(d, data, 'altitudeLineColored', false);
+	}
+
 	function altitudeLine(d, data) {
 		return attrFn(d, data, 'altitudeLine', false);
 	}
@@ -264,7 +268,9 @@
 			const name1 = 'altitudeLine_' + dataid + '_' + i;
 			let line = self.lines.getObjectByName(name1);
 			if (line === void 0) {
-				line = new THREE.Line(self.lineGeom, self.lineBasicMaterials[index]);
+				const flag = altitudeLineColored(d, data);
+				const mat = flag ? self.lineBasicMaterials[index] : self.frameMat;
+				line = new THREE.Line(self.lineGeom, mat);
 				line.name = name1;
 				self.lines.add(line);
 			}
