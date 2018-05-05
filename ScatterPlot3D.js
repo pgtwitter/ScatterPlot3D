@@ -324,11 +324,11 @@
 	}
 
 	function contain(r1, r2) {
-		let flag = false;
-		for (let i = 0; i < 3; i++) {
-			flag = (r1[i][0] < r2[i][0] || r2[i][1] < r1[i][1]) ? true : flag;
+		let flag = true;
+		for (let i = 0; i < 3 && flag; i++) {
+			flag = (r2[i][0] < r1[i][0] && r1[i][1] < r2[i][1]) ? flag : false;
 		}
-		return !flag;
+		return flag;
 	}
 
 	function ScatterPlot(self, datam) {
