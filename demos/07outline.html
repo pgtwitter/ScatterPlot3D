@@ -1,0 +1,38 @@
+<meta charset="utf-8">
+<div id="container11" style="width:300px;height:300px;float:left;"></div>
+<div id="container12" style="width:300px;height:300px;float:left;"></div>
+<link rel="stylesheet" href="../index.css">
+<script src="../threejs/three.min.js"></script>
+<script src="../threejs/addons/CanvasRenderer.js"></script>
+<script src="../threejs/addons/Projector.js"></script>
+<script src="../threejs/addons/OrbitControls.js"></script>
+<script src="../ScatterPlot3D.js"></script>
+<script>
+	const r = function(n) {
+		n = (n) ? n : 0;
+		let sum = 0;
+		for (let i = 0; i < 6; i++) {
+			sum += Math.random();
+		}
+		return sum / 6.0 - 0.5 - n;
+	}
+
+	const data11 = [];
+	for (let i = 0; i < 50; i++)
+		data11.push({
+			radius: Math.random() * 10 + 1,
+			x: r(),
+			y: r(),
+			z: r()
+		});
+	ScatterPlot3D.plot(document.getElementById('container11'), {
+		style: 'rgba(255, 200, 50)',
+		outline: false,
+		data: data11
+	});
+	ScatterPlot3D.plot(document.getElementById('container12'), {
+		style: 'rgba(255, 200, 50)',
+		outline: true,
+		data: data11
+	});
+</script>

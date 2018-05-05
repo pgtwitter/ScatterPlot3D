@@ -182,6 +182,14 @@
 		return d[key] !== void 0 ? d[key] : (data[key] !== void 0 ? data[key] : v);
 	}
 
+	function outline(d, data) {
+		return attrFn(d, data, 'outline', true);
+	}
+
+	function radius(d, data) {
+		return attrFn(d, data, 'radius', 1);
+	}
+
 	function altitudeLineColored(d, data) {
 		return attrFn(d, data, 'altitudeLineColored', false);
 	}
@@ -199,9 +207,12 @@
 	}
 
 	function styleKey(d, data) {
-		const s = style(d, data);
-		const lw = lineWidth(d, data);
-		return s + '::' + lw;
+		const attrs = []
+		attrs.push(style(d, data));
+		attrs.push(lineWidth(d, data));
+		attrs.push(radius(d, data));
+		attrs.push(outline(d, data));
+		return attrs.join('::');
 	}
 
 	function materials(self, datam) {
@@ -213,6 +224,8 @@
 				stylesDic[key] = {
 					style: style(d, data),
 					lineWidth: lineWidth(d, data),
+					radius: radius(d, data),
+					outline: outline(d, data),
 				};
 			});
 		});
@@ -226,11 +239,13 @@
 				program: function(context) {
 					context.fillStyle = styleObj.style;
 					context.beginPath();
-					context.arc(0, 0, 0.01, 0, PI2, true);
+					context.arc(0, 0, 0.01 * styleObj.radius, 0, PI2, true);
 					context.fill();
-					context.strokeStyle = '#333';
-					context.lineWidth = 0.001;
-					context.stroke();
+					if (styleObj.outline) {
+						context.strokeStyle = '#333';
+						context.lineWidth = 0.001;
+						context.stroke();
+					}
 				}
 			}));
 			self.lineBasicMaterials.push(new THREE.LineBasicMaterial({
