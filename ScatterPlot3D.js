@@ -1,5 +1,5 @@
 (function() {
-	const xyz = ['x', 'y', 'z'];
+	const XYZ = ['x', 'y', 'z'];
 	let isAnimated = false;
 	const containerIdKey = 'data-scatterplot3d-id';
 	const classes = {};
@@ -19,7 +19,7 @@
 		const vB = new THREE.Vector3(points[1].x, points[1].y, points[1].z);
 		const vAB = vB.sub(vA);
 		object.scale.x = vAB.length();
-		Array.prototype.forEach.call(xyz, function(key, j) {
+		Array.prototype.forEach.call(XYZ, function(key, j) {
 			object.position[key] = (points[0][key] + points[1][key]) / 2.0;
 		});
 		const vABn = vAB.normalize();
@@ -79,13 +79,13 @@
 			box.name = name;
 			self.frame.add(box);
 		}
-		Array.prototype.forEach.call(xyz, function(key, i) {
+		Array.prototype.forEach.call(XYZ, function(key, i) {
 			box.scale[key] = self.axes[i][2];
 		});
 	}
 
 	function Frame(self) {
-		Array.prototype.forEach.call(xyz, function(key, i) {
+		Array.prototype.forEach.call(XYZ, function(key, i) {
 			Frame_Line(self, key, i);
 			if (self.onesideFlag[i]) return;
 			Frame_Plane(self, key, i);
@@ -149,7 +149,7 @@
 	}
 
 	function scale(self, datam) {
-		const tmp = xyz.map(function(key) {
+		const tmp = XYZ.map(function(key) {
 			const tmp1 = [];
 			Array.prototype.forEach.call(datam, function(data, i) {
 				Array.prototype.push.apply(tmp1, data.data.map(function(d) {
@@ -235,7 +235,7 @@
 	}
 
 	function arrange(data, ranges, axes) {
-		const arrangedData = xyz.map(function(key, i) {
+		const arrangedData = XYZ.map(function(key, i) {
 			return (data.map(function(d) {
 				return normalize(d[key], ranges[i]) * axes[i][2];
 			}));
@@ -255,7 +255,7 @@
 				point.userInfo = d;
 				self.points.add(point);
 			}
-			Array.prototype.forEach.call(xyz, function(key, j) {
+			Array.prototype.forEach.call(XYZ, function(key, j) {
 				point.position[key] = arrangedData[j][i];
 			});
 			if (!altitudeLine(d, data)) return;
@@ -310,7 +310,7 @@
 			const points = datam.map(function(data, i) {
 				const p = {};
 				Array.prototype.forEach.call(data, function(v, j) {
-					p[xyz[j]] = v;
+					p[XYZ[j]] = v;
 				});
 				return p;
 			});
