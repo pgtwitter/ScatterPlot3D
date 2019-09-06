@@ -387,7 +387,7 @@
 		return 'ScatterPlot3D-' + (new Date()).getTime();
 	}
 
-	function ScatterPlot3D(container, datam) {
+	function ScatterPlot3D(container, datam, refresh) {
 		datam = pre(JSON.parse(JSON.stringify(datam)));
 		if (!datam) return;
 		const containerId = container.getAttribute(containerIdKey);
@@ -423,6 +423,7 @@
 				self.objects.rotation.x = Math.PI / 2;
 				self.objects.scale.y = -1;
 			}
+			if (refresh && refresh == true) self.datam = [];
 			if (!isAnimated) {
 				Animate();
 				window.addEventListener('resize', function() {
