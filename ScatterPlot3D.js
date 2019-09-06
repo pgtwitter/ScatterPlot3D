@@ -430,8 +430,8 @@
 				}, true);
 				isAnimated = true;
 			}
-			if (refresh && refresh == true) self.datam = [];
 		}
+		if (refresh && refresh == true) self.datam = [];
 		Array.prototype.push.apply(self.datam, datam);
 		ScatterPlot(self, datam);
 	}
