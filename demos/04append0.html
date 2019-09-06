@@ -26,7 +26,8 @@
 			x: Math.cos(th),
 			y: Math.sin(th),
 			z: Math.sin(2 * th),
-			style: 'rgb(' + c.join(',') + ')'
+			style: 'rgb(' + c.join(',') + ')',
+			outline: false
 		});
 		ScatterPlot3D.plot(div, data);
 	}, 10);

@@ -24,6 +24,7 @@
 			};
 			if (colorFn)
 				d.style = rgb2str(colorFn(i, n));
+			d.outline = false;
 			data.push(d);
 		}
 		const obj = {
