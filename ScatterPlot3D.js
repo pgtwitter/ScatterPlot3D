@@ -423,6 +423,7 @@
 				self.objects.rotation.x = Math.PI / 2;
 				self.objects.scale.y = -1;
 			}
+			if (refresh && refresh == true) self.datam = [];
 			if (!isAnimated) {
 				Animate();
 				window.addEventListener('resize', function() {
