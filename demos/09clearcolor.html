@@ -1,0 +1,116 @@
+<meta charset="utf-8">
+<div id="container" style="width:100%;height:100%;"></div>
+<link rel="stylesheet" href="./index.css">
+<script src="../threejs/three.min.js"></script>
+<script src="../threejs/addons/CanvasRenderer.js"></script>
+<script src="../threejs/addons/Projector.js"></script>
+<script src="../threejs/addons/OrbitControls.js"></script>
+<script src="../ScatterPlot3D.js"></script>
+<script>
+	(function() {
+		const DEG2RAD = Math.PI / 180.0;
+
+		function maskFn(i) {
+			var v = i;
+			return [
+				Math.floor(v / 8),
+				Math.floor((v % 8) / 4),
+				Math.floor(((v % 8) % 4) / 2),
+				v % 8 % 4 % 2
+			];
+		}
+
+		function rgb2str(rgb) {
+			return 'rgb(' + rgb.join(',') + ')';
+		}
+
+		function rotateX(d, deg) {
+			const c = Math.cos(deg * DEG2RAD);
+			const s = Math.sin(deg * DEG2RAD);
+			return {
+				x: 1 * d.x + 0 * d.y + 1 * d.z,
+				y: 0 * d.x + c * d.y - s * d.z,
+				z: 0 * d.x + s * d.y + c * d.z
+			};
+		}
+
+		function rotateY(d, deg) {
+			const c = Math.cos(deg * DEG2RAD);
+			const s = Math.sin(deg * DEG2RAD);
+			return {
+				x: c * d.x - 0 * d.y - s * d.z,
+				y: 0 * d.x + 1 * d.y + 0 * d.z,
+				z: s * d.x + 0 * d.y + c * d.z
+			};
+		}
+
+		function rotateZ(d, deg) {
+			const c = Math.cos(deg * DEG2RAD);
+			const s = Math.sin(deg * DEG2RAD);
+			return {
+				x: c * d.x - s * d.y + 0 * d.z,
+				y: s * d.x + c * d.y + 0 * d.z,
+				z: 0 * d.x + 0 * d.y + 1 * d.z
+			};
+		}
+
+		const deg_step = 10;
+
+		function data(r, degX, degY, degZ) {
+			const data = []
+			for (let i = 0; i < 360; i += deg_step) {
+				const d = {
+					x: r * Math.cos(i * DEG2RAD),
+					y: r * Math.sin(i * DEG2RAD),
+					z: 1E-6 * Math.sin(i * DEG2RAD),
+				};
+				data.push(rotateZ(rotateY(rotateX(d, degX), degY), degZ));
+			}
+			return data;
+		}
+
+		let step = 0;
+		let mask = 1;
+		setInterval(function() {
+			step++;
+			mask = (step > 5E1) ? mask + 1 : mask
+			mask = (mask == 16) ? 1 : mask;
+			step = (step > 5E1) ? 0 : step;
+
+			const d0 = data(100, 0, 0, 0);
+			const v = maskFn(mask);
+			const r = v[3] == 0 ? 75 : 25 * Math.cos(step / 5E1 * 2 * Math.PI) + 50;
+			const th = 180 * Math.sin(step / 5E1 * 2 * Math.PI);
+			const d1 = data(r, th * v[0], th * v[1] + 0, th * v[2]);
+
+			const datam = [];
+			for (let i = 0; i < d0.length; i++) {
+				const deg = i * deg_step;
+				const style = rgb2str([
+					Math.floor(127 * Math.cos(deg * DEG2RAD)) + 127,
+					Math.floor(127 * Math.sin(deg * DEG2RAD)) + 127,
+					Math.floor(127 * Math.sin((deg - 90) * DEG2RAD)) + 127,
+				]);
+				datam.push({
+					data: [d0[i]],
+					type: 0,
+					style: style,
+				});
+				datam.push({
+					data: [d1[i]],
+					type: 0,
+					style: style,
+				});
+				datam.push({
+					data: [d0[i], d1[i]],
+					type: 1,
+					style: style,
+					lineWidth: 1,
+				});
+			}
+			ScatterPlot3D.plot(document.getElementById('container'), datam, true);
+			ScatterPlot3D.setClearColor(document.getElementById('container'), '#111');
+		}, 100);
+
+	})();
+</script>
