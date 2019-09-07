@@ -7,14 +7,16 @@
 <script src="../threejs/addons/OrbitControls.js"></script>
 <script src="../ScatterPlot3D.js"></script>
 <script>
-	const DEG2RAD = Math.PI / 180.0;
 	(function() {
+		const DEG2RAD = Math.PI / 180.0;
+
 		function maskFn(i) {
 			var v = i;
 			return [
-				Math.floor(v / 4),
-				Math.floor((v % 4) / 2),
-				v % 4 % 2
+				Math.floor(v / 8),
+				Math.floor((v % 8) / 4),
+				Math.floor(((v % 8) % 4) / 2),
+				v % 8 % 4 % 2
 			];
 		}
 
@@ -26,9 +28,9 @@
 			const c = Math.cos(deg * DEG2RAD);
 			const s = Math.sin(deg * DEG2RAD);
 			return {
-				x: 0 * d.x + 0 * d.y + 1 * d.z,
-				y: c * d.x - s * d.y + 0 * d.z,
-				z: s * d.x + c * d.y + 0 * d.z
+				x: 1 * d.x + 0 * d.y + 1 * d.z,
+				y: 0 * d.x + c * d.y - s * d.z,
+				z: 0 * d.x + s * d.y + c * d.z
 			};
 		}
 
@@ -36,9 +38,9 @@
 			const c = Math.cos(deg * DEG2RAD);
 			const s = Math.sin(deg * DEG2RAD);
 			return {
-				x: c * d.x - s * d.y + 0 * d.z,
-				y: 0 * d.x + 0 * d.y + 1 * d.z,
-				z: s * d.x + c * d.y + 0 * d.z
+				x: c * d.x - 0 * d.y - s * d.z,
+				y: 0 * d.x + 1 * d.y + 0 * d.z,
+				z: s * d.x + 0 * d.y + c * d.z
 			};
 		}
 
@@ -54,7 +56,7 @@
 
 		function data(r, type, color, degX, degY, degZ) {
 			const data = []
-			const i_step = 10;
+			const i_step = 5;
 			for (let i = 0; i < 360; i += i_step) {
 				const d = {
 					x: r * Math.cos(i * DEG2RAD),
@@ -76,18 +78,19 @@
 		setInterval(function() {
 			step++;
 			mask = (step > 5E1) ? mask + 1 : mask
-			mask = (mask == 8) ? 1 : mask;
+			mask = (mask == 16) ? 1 : mask;
 			step = (step > 5E1) ? 0 : step;
 
 			const datam = [];
-			const d0 = data(100, 0, [192, 192, 192], 0, 90, 0);
+			const d0 = data(100, 0, [192, 192, 192], 0, 0, 0);
 			const th = 180 * Math.sin(step / 5E1 * 2 * Math.PI);
 			const v = maskFn(mask);
-			const d1 = data(75, 0, [128, 128, 128], th * v[0], th * v[1] + 90, th / 2 * v[2]);
+			const r = v[3] == 0 ? 75 : 25 * Math.cos(step / 5E1 * 2 * Math.PI) + 50;
+			const d1 = data(r, 0, [128, 128, 128], th * v[0], th * v[1] + 0, th * v[2]);
 
 			datam.push(d0);
 			datam.push(d1);
-			Array.prototype.forEach.call(d0.data, function(d, i) {
+			for (let i = 0; i < d0.data.length; i++) {
 				const data = [];
 				data.push(d0.data[i]);
 				data.push(d1.data[i]);
@@ -95,10 +98,10 @@
 					'data': data,
 					'type': 1,
 					'style': rgb2str([8, 8, 8]),
-					'lineWidth': 2,
+					'lineWidth': 1,
 				};
 				datam.push(obj);
-			});
+			}
 			ScatterPlot3D.plot(document.getElementById('container'), datam, true);
 		}, 100);
 
