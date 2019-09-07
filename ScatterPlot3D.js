@@ -387,6 +387,12 @@
 		return 'ScatterPlot3D-' + (new Date()).getTime();
 	}
 
+	function setClearColor(container, color) {
+		const self = classes[container.getAttribute(containerIdKey)];
+		if (!self) return;
+		self.renderer.setClearColor(color, 1);
+	}
+
 	function ScatterPlot3D(container, datam, refresh) {
 		datam = pre(JSON.parse(JSON.stringify(datam)));
 		if (!datam) return;
@@ -439,5 +445,6 @@
 
 	window.ScatterPlot3D = {
 		plot: ScatterPlot3D,
+		setClearColor: setClearColor,
 	}
 })();
