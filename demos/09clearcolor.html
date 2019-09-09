@@ -71,16 +71,18 @@
 
 		let step = 0;
 		let mask = 1;
+		const N = 3E2;
 		setInterval(function() {
 			step++;
-			mask = (step > 5E1) ? mask + 1 : mask
+			mask = (step > N) ? mask + 1 : mask
 			mask = (mask == 16) ? 1 : mask;
-			step = (step > 5E1) ? 0 : step;
+			step = (step > N) ? 0 : step;
 
+			const rad = step / N * 2 * Math.PI;
 			const d0 = data(100, 0, 0, 0);
 			const v = maskFn(mask);
-			const r = v[3] == 0 ? 75 : 25 * Math.cos(step / 5E1 * 2 * Math.PI) + 50;
-			const th = 180 * Math.sin(step / 5E1 * 2 * Math.PI);
+			const r = v[3] == 0 ? 75 : 25 * Math.cos(rad) + 50;
+			const th = 3 * 180 * Math.sin(rad);
 			const d1 = data(r, th * v[0], th * v[1] + 0, th * v[2]);
 
 			const datam = [];
@@ -110,7 +112,7 @@
 			}
 			ScatterPlot3D.plot(document.getElementById('container'), datam, true);
 			ScatterPlot3D.setClearColor(document.getElementById('container'), '#111');
-		}, 100);
+		}, 10);
 
 	})();
 </script>
